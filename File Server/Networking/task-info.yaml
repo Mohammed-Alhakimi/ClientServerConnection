@@ -1,0 +1,194 @@
+type: edu
+files:
+- name: src/server/Main2.java
+  visible: true
+  text: |-
+    package server;
+
+    public class Main {
+
+        public static void main(String[] args) {
+            System.out.println("Hello, world!");
+        }
+    }
+  learner_created: false
+- name: test/FileServerTest.java
+  visible: false
+  text: |
+    import org.hyperskill.hstest.dynamic.input.DynamicTestingMethod;
+    import org.hyperskill.hstest.exception.outcomes.WrongAnswer;
+    import org.hyperskill.hstest.stage.StageTest;
+    import org.hyperskill.hstest.testcase.CheckResult;
+    import org.hyperskill.hstest.testing.TestedProgram;
+
+
+    public class FileServerTest extends StageTest<String> {
+
+        @DynamicTestingMethod
+        CheckResult test() throws InterruptedException {
+
+            TestedProgram client = new TestedProgram("client");
+            TestedProgram server = new TestedProgram("server");
+            server.setReturnOutputAfterExecution(true);
+
+            server.startInBackground();
+
+            Thread.sleep(1000);
+            String serverOutput = server.getOutput().trim();
+
+            String serverStartedMessage = "Server started!";
+            if (!serverOutput.equals(serverStartedMessage)) {
+                throw new WrongAnswer("Server output should be \"" + serverStartedMessage + "\" until the client connects!");
+            }
+
+            String clientOutput = client.start().trim();
+            serverOutput = server.getOutput().trim();
+
+            if (clientOutput.isEmpty()) {
+                return CheckResult.wrong("Client output shouldn't be empty!");
+            }
+
+            if (serverOutput.equals(serverStartedMessage)) {
+                return CheckResult.wrong("After the client connects to the server you should output the received data!");
+            }
+
+            if (!serverOutput.contains("Received: Give me everything you have!")) {
+                return CheckResult.wrong("Server output should contain \"Received: Give me everything you have!\"");
+            }
+
+            if (!serverOutput.contains("Sent: All files were sent!")) {
+                return CheckResult.wrong("Server output should contain \"Sent: All files were sent!\"");
+            }
+
+            if (serverOutput.indexOf("Sent: All files were sent!") < serverOutput.indexOf("Received: Give me everything you have!")) {
+                return CheckResult.wrong("The server should print \"Sent: All files were sent!\" only after " +
+                    "\"Received: Give me everything you have!\" was printed!");
+            }
+
+            if (!clientOutput.contains("Sent: Give me everything you have!")) {
+                return CheckResult.wrong("Client output should contain \"Sent: Give me everything you have!\"");
+            }
+
+            if (!clientOutput.contains("Received: All files were sent!")) {
+                return CheckResult.wrong("Client output should contain \"Received: All files were sent!\"");
+            }
+
+            if (clientOutput.indexOf("Received: All files were sent!") < clientOutput.indexOf("Sent: Give me everything you have!")) {
+                return CheckResult.wrong("The client should print \"Received: All files were sent!\" only after " +
+                    "\"Sent: Give me everything you have!\" was printed!");
+            }
+
+            return CheckResult.correct();
+        }
+    }
+  learner_created: false
+- name: src/server/commands/Command.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import lombok.Getter;
+    import lombok.Setter;
+
+    public abstract class Command {
+        @Getter
+        @Setter
+        String type;
+        @Getter
+        @Setter
+        String fileName;
+        @Getter
+        int fileNumber;
+
+        public Command(String type) {
+            this.type = type;
+        }
+
+        public Command(String type, String fileName) {
+            this.type = type;
+            this.fileName = fileName;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/ExitCommand.java
+  visible: true
+  text: |
+    package server.commands;
+
+    public class ExitCommand extends Command {
+
+        public ExitCommand() {
+            super("exit");
+        }
+    }
+  learner_created: true
+- name: src/server/commands/AddCommand.java
+  visible: true
+  text: |
+    package server.commands;
+
+    public class AddCommand extends Command {
+
+        public AddCommand(String fileName) {
+            super("add",fileName);
+        }
+    }
+  learner_created: true
+- name: src/server/commands/DeleteCommand.java
+  visible: true
+  text: |
+    package server.commands;
+
+
+    public class DeleteCommand extends Command {
+
+        public DeleteCommand(String fileName) {
+            super("delete", fileName);
+        }
+    }
+  learner_created: true
+- name: src/server/commands/GetCommand.java
+  visible: true
+  text: |+
+    package server.commands;
+
+    public class GetCommand extends Command {
+
+        public GetCommand(String fileName) {
+            super("get", fileName);
+        }
+    }
+
+  learner_created: true
+- name: src/client/Main2.java
+  visible: true
+  learner_created: true
+- name: src/server/commands/CommandParser.java
+  visible: true
+  text: |
+    package server;
+
+    import server.commands.*;
+
+    public class CommandParser {
+
+        public static Command parse(String input) {
+            if (input.startsWith("add ")) {
+                return new AddCommand(input.substring(4));
+            } else if (input.startsWith("get ")) {
+                return new GetCommand(input.substring(4));
+            } else if (input.startsWith("delete ")) {
+                return new DeleteCommand(input.substring(7));
+            } else if (input.equals("exit")) {
+                return new ExitCommand();
+            }
+            return null;
+        }
+    }
+  learner_created: true
+feedback_link: https://hyperskill.org/projects/52/stages/284/implement#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Mon, 31 Jan 2022 03:28:04 UTC
+record: 2
